@@ -1,0 +1,37 @@
+{
+  "uuid": "3fec8765-b2e4-45c3-85b3-ff747664a6ea",
+  "shortName": "Stars & Stripes",
+  "longName": "Stars & Stripes",
+  "companyName": "Nitin Gupta",
+  "versionLabel": "1.0",
+  "sdkVersion": "3",
+  "targetPlatforms": ["basalt"],
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": [
+      {
+        "characterRegex": "[:0-9-]",
+        "type": "font",
+        "name": "BLOCK_24",
+        "file": "fonts/block.ttf"
+      },
+      {
+        "characterRegex": "[:0-9-]",
+        "type": "font",
+        "name": "BLOCK_36",
+        "file": "fonts/block.ttf"
+      },
+      {
+        "type": "raw",
+        "name": "FLAG",
+        "file": "images/americanflag.png"  
+      }
+    ]
+  }
+}
+
