@@ -34,6 +34,10 @@ static int s_tm_wday = 0;
 static int s_tm_mon = 0;
 static int s_tm_mday = 0;
 static bool s_animation_enabled = true;
+static bool s_bt_connected = false;
+
+// ON for 120ms, off for 400ms, on for 250ms, off for 400ms, on for 120ms
+static const uint32_t vibe_segments[5] = {120,400,250,400,120};
 
 static void prv_update_day(int day) {
     switch (day) {
@@ -221,10 +225,29 @@ static void draw_lines(GContext* ctx, GColor color, int16_t offset) {
   graphics_draw_line(ctx, GPoint(72, -1 + offset), GPoint(144, -1 + offset));
   graphics_draw_line(ctx, GPoint(0, 168 - offset), GPoint(72, 168 - offset));
 }
+
+#define BT_X_OFFSET (144 / 2 - 3)
+#define BT_Y_OFFSET (168 / 2 - 2)
+#define BT_LINE_LENGTH 5
+#define BT_POINT(x, y) GPoint(x + BT_X_OFFSET, y + BT_Y_OFFSET)
+static void prv_draw_bt_icon(GContext *ctx) {
+  graphics_context_set_stroke_width(ctx, 3);
+  graphics_context_set_stroke_color(ctx, GColorRed);
+  graphics_draw_line(ctx, BT_POINT(BT_LINE_LENGTH, -BT_LINE_LENGTH), BT_POINT(0, -2*BT_LINE_LENGTH));
+  graphics_draw_line(ctx, BT_POINT(-BT_LINE_LENGTH, -BT_LINE_LENGTH), BT_POINT(BT_LINE_LENGTH, BT_LINE_LENGTH));
+  graphics_draw_line(ctx, BT_POINT(-BT_LINE_LENGTH, BT_LINE_LENGTH), BT_POINT(BT_LINE_LENGTH, -BT_LINE_LENGTH));
+  graphics_draw_line(ctx, BT_POINT(BT_LINE_LENGTH, BT_LINE_LENGTH), BT_POINT(0, 2*BT_LINE_LENGTH));
+  graphics_draw_line(ctx, BT_POINT(0, -2*BT_LINE_LENGTH), BT_POINT(0, 2*BT_LINE_LENGTH));
+}
+
 static void update_canvas_layer(struct Layer *layer, GContext* ctx) {
   draw_lines(ctx, GColorRed, 2);
   draw_lines(ctx, GColorWhite, 4);
   draw_lines(ctx, GColorBlue, 6);
+
+  if (!s_bt_connected) {
+    prv_draw_bt_icon(ctx);
+  }
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -241,6 +264,19 @@ static void click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
 }
 
+static void bt_handler(bool connected) {
+  // Update state in order to draw or not draw BT connect/disconnect icon
+  if (connected) {
+    s_bt_connected = true;
+  } else {
+    s_bt_connected = false;
+    VibePattern pat = {
+      .durations = vibe_segments,
+      .num_segments = ARRAY_LENGTH(vibe_segments),
+    };
+    vibes_enqueue_custom_pattern(pat); 
+  }
+}
 
 static void main_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
@@ -303,12 +339,16 @@ static void main_window_load(Window *window) {
   tick_timer_service_subscribe(MINUTE_UNIT, prv_update_time);
 
   accel_tap_service_subscribe(tap_enable_animation);
+
+  bluetooth_connection_service_subscribe(bt_handler);
+  s_bt_connected = bluetooth_connection_service_peek();
 }
 
 
 static void main_window_unload(Window *window) {
   bitmap_layer_destroy(s_bitmap_layer);
   accel_tap_service_unsubscribe();
+  bluetooth_connection_service_unsubscribe();
 }
 
 static void init() {
