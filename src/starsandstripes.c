@@ -276,6 +276,7 @@ static void bt_handler(bool connected) {
     };
     vibes_enqueue_custom_pattern(pat); 
   }
+  layer_mark_dirty(s_canvas_layer);
 }
 
 static void main_window_load(Window *window) {
